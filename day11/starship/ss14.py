@@ -4,7 +4,7 @@ import math
 import random
 from pygame.locals import *
 
-BLACK = [0,0,0]
+BLACK=[0,0,0]
 SILVER=[191,208,224]
 RED=[255,0,0]
 CYAN=[0,224,255]
@@ -20,26 +20,33 @@ img_sship=[
 img_weapon=pygame.image.load("image_gl/bullet.png")
 img_shield=pygame.image.load("image_gl/shield.png")
 img_enemy=[
-        pygame.image.load("image_gl/enemy0.png"),
-        pygame.image.load("image_gl/enemy1.png"),
+    pygame.image.load("image_gl/enemy0.png"),
+    pygame.image.load("image_gl/enemy1.png"),
+    pygame.image.load("image_gl/enemy2.png"),
+    pygame.image.load("image_gl/enemy3.png"),
+    pygame.image.load("image_gl/enemy4.png"),
+    pygame.image.load("image_gl/enemy_boss.png"),
+    pygame.image.load("image_gl/enemy_boss_f.png"),
+
 ]
 img_explode=[
-        None,
-        pygame.image.load("image_gl/explosion1.png"),
-        pygame.image.load("image_gl/explosion2.png"),
-        pygame.image.load("image_gl/explosion3.png"),
-        pygame.image.load("image_gl/explosion4.png"),
-        pygame.image.load("image_gl/explosion5.png"),
+    None,
+    pygame.image.load("image_gl/explosion1.png"),
+    pygame.image.load("image_gl/explosion2.png"),
+    pygame.image.load("image_gl/explosion3.png"),
+    pygame.image.load("image_gl/explosion4.png"),
+    pygame.image.load("image_gl/explosion5.png"),
 ]
 img_title=[
-        pygame.image.load("image_gl/nebula.png"),
-        pygame.image.load("image_gl/logo.png"),
+    pygame.image.load("image_gl/nebula.png"),
+    pygame.image.load("image_gl/logo.png"),
 ]
 
-se_barrage = None
-se_damage = None
-se_explosion = None
-se_shot = None
+#SEを読み込む変数
+se_barrage=None #弾幕時
+se_damage=None
+se_explosion=None
+se_shot=None
 
 idx=0
 tmr=0 
@@ -49,50 +56,59 @@ bg_y = 0
 ss_x = 480
 ss_y = 360
 ss_d = 0 
-key_spc = 0
-key_z = 0
 
-ss_shield = 100
+ss_shield=100
 ss_muteki=0
 
-MISSILE_MAX = 200
-msl_no = 0
+key_spc = 0 
+key_z=0 
+
+MISSILE_MAX=200
+msl_no=0
 msl_f = [False]*MISSILE_MAX
-msl_x = [0]*MISSILE_MAX
-msl_y = [0]*MISSILE_MAX
-msl_a = [0]*MISSILE_MAX
+msl_x = [0]*MISSILE_MAX 
+msl_y = [0]*MISSILE_MAX  
+msl_a = [0]*MISSILE_MAX 
 
-ENEMY_MAX = 100
-emy_no = 0
-emy_f = [False]*ENEMY_MAX
-emy_x = [0]*ENEMY_MAX
-emy_y = [0]*ENEMY_MAX
-emy_a = [0]*ENEMY_MAX
-emy_type = [0]*ENEMY_MAX
-emy_speed = [0]*ENEMY_MAX
+ENEMY_MAX=100
+emy_no=0
+emy_f=[False]*ENEMY_MAX
+emy_x=[0]*ENEMY_MAX
+emy_y=[0]*ENEMY_MAX
+emy_a=[0]*ENEMY_MAX
+emy_type=[0]*ENEMY_MAX
+emy_speed=[0]*ENEMY_MAX
+emy_shield=[0]*ENEMY_MAX #敵のシールド
+emy_count=[0]*ENEMY_MAX #敵の動きを管理
 
-EMY_BULLET = 0
-LINE_T=-80
+
+EMY_BULLET = 0 #敵が発射する弾の番号を管理する定数
+EMY_ZAKO = 1 #ザコ機の番号を管理する定数
+EMY_BOSS = 5
+
+LINE_T=-80 
 LINE_B=800
 LINE_L=-80
 LINE_R=1040
 
-EFFECT_MAX = 100
-eff_no = 0
-eff_p = [0]*EFFECT_MAX
-eff_x = [0]*EFFECT_MAX
-eff_y = [0]*EFFECT_MAX
+EFFECT_MAX=100 #爆発演出の最大数
+eff_no=0 # 爆発演出のindex
+eff_p=[0]*EFFECT_MAX #爆発演出画像用リスト
+eff_x=[0]*EFFECT_MAX
+eff_y=[0]*EFFECT_MAX
 
 def get_dis(x1,y1,x2,y2):
-    return ((x1-x2)**2+ (y1-y2)**2)
+    return ((x1-x2)**2 + (y1-y2)**2)
+
 def draw_text(scrn,txt,x,y,siz,col):
-    fnt = pygame.font.Font(None,siz)
-    sur = fnt.render(txt,True,col)
-    x = x - sur.get_width()/2
-    y = y - sur.get_height()/2
+    fnt=pygame.font.Font(None,siz)
+    sur=fnt.render(txt,True,col)
+    x=x - sur.get_width()/2
+    y=y - sur.get_height()/2
     scrn.blit(sur,[x,y])
-def move_starship(scrn, key): # 自機の移動
-    global ss_x, ss_y, ss_d,key_spc,key_z,ss_shield,ss_muteki,idx,tmr
+
+def move_starship(scrn, key): 
+    global ss_x, ss_y,ss_d,key_spc,key_z,ss_shield,ss_muteki,idx,tmr
     ss_d=0
     if key[K_UP] == 1:
         ss_y = ss_y - 20
@@ -113,21 +129,21 @@ def move_starship(scrn, key): # 自機の移動
         if ss_x > 920:
             ss_x = 920
 
-    key_spc = (key_spc+1) * key[K_SPACE]
-    if key_spc%5 == 1:
+    key_spc =(key_spc+1) * key[K_SPACE] #スペースキーを押している間key_spcを加算
+    if key_spc%5==1:
         set_missile(0)
         se_shot.play()
-    key_z = (key_z+1)*key[K_z]
+    key_z=(key_z+1)*key[K_z]
     if key_z == 1 and ss_shield > 10:
         set_missile(10)
         ss_shield -= 10
         se_barrage.play()
-    if ss_muteki%2 == 0:
+    if ss_muteki%2==0:
         scrn.blit(img_sship[3],[ss_x-8,ss_y+40+(tmr%3)*2])
         scrn.blit(img_sship[ss_d],[ss_x-37,ss_y-48])
-    if ss_muteki > 0:
-        ss_muteki -=1
-        return
+    if ss_muteki>0:
+        ss_muteki-=1
+        return #無敵状態の場合はこれ以降の衝突判定を行わない
     elif idx == 1:
         for i in range(ENEMY_MAX):
             if emy_f[i] == True:
@@ -139,19 +155,17 @@ def move_starship(scrn, key): # 自機の移動
                     ss_shield-=10
                     if ss_shield <= 0:
                         ss_shield=0
-                        idx=2
+                        idx=2 #ゲームオーバーへ
                         tmr=0
                     if ss_muteki == 0:
                         ss_muteki=60
                         se_damage.play()
-                    emy_f[i]=False
-
-    #scrn.blit(img_sship[3], [ss_x-8, ss_y+40+(tmr%3)*2])
-    #scrn.blit(img_sship[ss_d], [ss_x-37, ss_y-48])
+                    if emy_type[i] < EMY_BOSS:
+                        emy_f[i]=False
 
 def set_missile(typ):
     global msl_no
-    if typ == 0:
+    if typ ==0:
         msl_f[msl_no]=True
         msl_x[msl_no]=ss_x
         msl_y[msl_no]=ss_y-50
@@ -176,10 +190,17 @@ def move_missile(scrn):
                 msl_f[i]=False
 
 def bring_enemy():
-    if tmr % 30 == 0:
-        set_enemy(random.randint(20,940),LINE_T,90,1,6)
+    sec=tmr/30
+    if tmr % 30 ==0:
+        if 0 < sec <15 and tmr % 60 ==0:
+            set_enemy(random.randint(20,940),LINE_T,90,EMY_ZAKO,8,1) #敵１
+            set_enemy(random.randint(20,940),LINE_T,90,EMY_ZAKO+1,12,1) #敵2
+            set_enemy(random.randint(100,860),LINE_T,random.randint(60,120),EMY_ZAKO+2,6,3) #敵3
+            set_enemy(random.randint(100,860),LINE_T,90,EMY_ZAKO+3,12,2) #敵4
+        if tmr == 30 * 20: #ボス出現
+            set_enemy(480,-210,90,EMY_BOSS,4,200)
 
-def set_enemy(x,y,a,ty,sp):
+def set_enemy(x,y,a,ty,sp,sh):
     global emy_no
     while True:
         if emy_f[emy_no]==False:
@@ -189,6 +210,9 @@ def set_enemy(x,y,a,ty,sp):
             emy_a[emy_no]=a
             emy_type[emy_no]=ty
             emy_speed[emy_no]=sp
+            emy_shield[emy_no]=sh
+            emy_count[emy_no]=0
+
             break
         emy_no=(emy_no+1)%ENEMY_MAX
 
@@ -197,44 +221,81 @@ def move_enemy(scrn):
     for i in range(ENEMY_MAX):
         if emy_f[i] == True:
             ang = -90-emy_a[i]
-            png = emy_type[i]
-            emy_x[i] = emy_x[i]+emy_speed[i]*math.cos(math.radians(emy_a[i]))
-            emy_y[i] = emy_y[i]+emy_speed[i]*math.sin(math.radians(emy_a[i]))
-            if emy_type[i] == 1 and emy_y[i] > 360:
-                set_enemy(emy_x[i],emy_y[i],90,0,8)
-                emy_a[i]=-45
-                emy_speed[i]=16
-            if emy_x[i] < LINE_L or LINE_R < emy_x[i] or emy_y[i] < LINE_T or LINE_B < emy_y[i]:
-                emy_f[i] = False
-            if emy_type[i] !=EMY_BULLET:
+            png=emy_type[i]
+            if emy_type[i] < EMY_BOSS:
+                emy_x[i] = emy_x[i]+emy_speed[i]*math.cos(math.radians(emy_a[i]))
+                emy_y[i] = emy_y[i]+emy_speed[i]*math.sin(math.radians(emy_a[i]))
+                if emy_type[i] == 4 :
+                    emy_count[i]  += 1
+                    ang=emy_count[i]*10
+                    if emy_y[i] > 240 and emy_a[i] == 90:
+                        emy_a[i]=random.choice([50,70,110,130])
+                        set_enemy(emy_x[i],emy_y[i],90,EMY_BULLET,6,0)
+                if emy_x[i] < LINE_L or LINE_R < emy_x[i] or emy_y[i] < LINE_T or LINE_B < emy_y[i]:
+                    emy_f[i]=False
+            else: #ボス
+                if emy_count[i] == 0:
+                    emy_y[i] +=2
+                    if emy_y[i] >=200:
+                        emy_count[i]=1
+                elif emy_count[i] == 1:
+                    emy_x[i] -= emy_speed[i]
+                    if emy_x[i] < 200:
+                        for j in range(0,10):
+                            set_enemy(emy_x[i],emy_y[i]+80,j*20,EMY_BULLET,6,0)
+                            emy_count[i] = 2
+                else:
+                    emy_x[i] += emy_speed[i]
+                    if emy_x[i] > 760:
+                        for j in range(0,10):
+                            set_enemy(emy_x[i],emy_y[i]+80,j*20,EMY_BULLET,6,0)
+                            emy_count[i] = 1
+                if emy_shield[i] < 100 and tmr % 30 == 0:
+                    set_enemy(emy_x[i],emy_y[i]+80,random.randint(60,120),EMY_BULLET,6,0)
+
+            if emy_type[i] != EMY_BULLET:
                 w=img_enemy[emy_type[i]].get_width()
                 h=img_enemy[emy_type[i]].get_height()
                 r=int((w+h)/4)+12
+                er = int((w+h)/4) #爆発演出表示用の値
                 for n in range(MISSILE_MAX):
-                    if msl_f[n] == True and get_dis(emy_x[i],emy_y[i],msl_x[n],msl_y[n]) < r **2:
-                        msl_f[n] = False
-                        set_effect(emy_x[i],emy_y[i])
-                        score += 100
-                        emy_f[i] = False
-                        if ss_shield < 100:
-                            ss_shield+=1
+                    if msl_f[n] == True and get_dis(emy_x[i],emy_y[i],msl_x[n],msl_y[n]) < r**2:
+                        msl_f[n]=False
+                        set_effect(emy_x[i]+random.randint(-er,er),emy_y[i]+random.randint(-er,er))
+                        if emy_type[i]==EMY_BOSS:
+                            png=emy_type[i]+1
+                        emy_shield[i] -= 1
+                        score +=100
+                        if emy_shield[i] == 0:
+                            emy_f[i]=False
+                            if ss_shield < 100:
+                                ss_shield+=1
+                            if emy_type[i] == EMY_BOSS and idx == 1:
+                                idx=3
+                                tmr=0
+                                for j in range(10):
+                                    set_effect(emy_x[i]+random.randint(-er,er),emy_y[i]+random.randint(-er,er))
+                                    se_explosion.play()
+
             img_rz=pygame.transform.rotozoom(img_enemy[png],ang,1.0)
             scrn.blit(img_rz,[emy_x[i]-img_rz.get_width()/2,emy_y[i]-img_rz.get_height()/2])
+
 def set_effect(x,y):
     global eff_no
     eff_p[eff_no]=1
     eff_x[eff_no]=x
     eff_y[eff_no]=y
     eff_no=(eff_no+1) % EFFECT_MAX
-
+    
 def draw_effect(scrn):
     for i in range(EFFECT_MAX):
         if eff_p[i] > 0:
             scrn.blit(img_explode[eff_p[i]],[eff_x[i]-48,eff_y[i]-48])
             eff_p[i] += 1
-            if eff_p[i] == 6:
-                eff_p[i] = 0
+            if eff_p[i]==6:
+                eff_p[i]=0
 
+    
 def main(): # メインループ
     global tmr,bg_y,idx,score,ss_x,ss_y,ss_d,ss_shield,ss_muteki
     global se_barrage,se_damage,se_explosion,se_shot
@@ -267,7 +328,7 @@ def main(): # メインループ
 
         key = pygame.key.get_pressed()
 
-        if idx == 0:
+        if idx==0: #タイトル
             img_rz=pygame.transform.rotozoom(img_title[0],-tmr%360,1.0)
             screen.blit(img_rz,[480-img_rz.get_width()/2,280-img_rz.get_height()/2])
             screen.blit(img_title[1],[70,160])
@@ -287,15 +348,15 @@ def main(): # メインループ
                     msl_f[i]=False
                 pygame.mixer.music.load("sound_gl/bgm.ogg")
                 pygame.mixer.music.play(-1)
-        if idx == 1:
-            move_starship(screen,key)
+        if idx==1: #ゲームプレイ中
+            move_starship(screen, key)
             move_missile(screen)
             bring_enemy()
             move_enemy(screen)
             if tmr == 30*60:
                 idx=3
                 tmr=0
-        if idx == 2:
+        if idx==2: #ゲームオーバー
             move_missile(screen)
             move_enemy(screen)
             if tmr == 1:
@@ -313,20 +374,19 @@ def main(): # メインループ
             if tmr == 400:
                 idx = 0
                 tmr = 0
-        if idx == 3:
-            move_starship(screen,key)
+        if idx == 3: #ゲームクリア
+            move_starship(screen, key)
             move_missile(screen)
-            if tmr == 1:
+            if tmr==1:
                 pygame.mixer.music.stop()
-            if tmr == 2:
+            if tmr==2:
                 pygame.mixer.music.load("sound_gl/gameclear.ogg")
                 pygame.mixer.music.play(0)
-            if tmr> 20:
+            if tmr >20:
                 draw_text(screen,"GAME CLEAR",480,300,80,SILVER)
             if tmr == 300:
-                idx = 0
-                tmr = 0
-
+                idx=0
+                tmr=0
 
         draw_effect(screen)
         draw_text(screen,"SCORE "+str(score),200,30,50,SILVER)
